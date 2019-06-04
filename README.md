@@ -1,5 +1,10 @@
-# SoftI2CMaster
+# SoftI2CTripleMaster
 
+This is a fork of SoftI2CMaster; this is modified to handle up to 5 simultaneous I2C devices, 
+with the ability to write to all of them at once (synchronized write - e.g. so all of them 
+can be triggered at the same instant), and the ability to read from each of the individually.
+
+Original doc follows:
 
 ## Why another I2C library?
 
