@@ -4,7 +4,19 @@ This is a fork of SoftI2CMaster; this is modified to handle up to 5 simultaneous
 with the ability to write to all of them at once (synchronized write - e.g. so all of them 
 can be triggered at the same instant), and the ability to read from each of the individually.
 
+Tis is the same as SoftI2CMaster, except, use:
+
+	Use SDA1_PIN and SDA2_PIN (etc upto 5) instead of just SDA_PIN
+
+	i2c1_write Instead of i2c_write to write to a single device (1 through 5)
+	i2ca_write Instead of i2c_write to write to ALL devices at the same time, simultaneously 
+
+	i2c1_read Instead of i2c_read to read from a single device (1 through 5)
+
 Original doc follows:
+
+
+
 
 ## Why another I2C library?
 
@@ -80,10 +92,10 @@ example, if you want to use *digital pin 2* for *SCL* and *digital pin 14*
 SCL and *port pin 0 of PORTC* for SDA:
 
     #define SCL_PIN 2
-    #define SCL_PORT PORTD
-    #define SDA_PIN 0
-    #define SDA_PORT PORTC
-    #include <SoftI2CMaster.h>
+    #define SCL_PORT PORTD	// Note - all devices use the same clock pin
+    #define SDA1_PIN 0
+    #define SDA1_PORT PORTC	// Note - all SDAx_PORT must be the same
+    #include <SoftI2CTripleMaster.h>
 
 
 ## Configuration
@@ -231,8 +243,10 @@ As a small example, let us consider reading one register from an I2C
 device, with an address space < 256 (i.e. one byte for addressing) 
 
 	// Simple sketch to read out one register of an I2C device
-	#define SDA_PORT PORTC
-	#define SDA_PIN 4 // = A4
+	#define SDA1_PORT PORTC
+	#define SDA1_PIN 4 // = A4
+	#define SDA2_PORT PORTC
+	#define SDA2_PIN 0 // = A0
 	#define SCL_PORT PORTC
 	#define SCL_PIN 5 // = A5
 	#include <SoftI2CMaster.h>
@@ -251,11 +265,14 @@ device, with an address space < 256 (i.e. one byte for addressing)
 	        Serial.println("I2C device busy");
 	        return;
 	    }
-	    i2c_write(MEMLOC); // send memory address
+	    i2ca_write(MEMLOC); // send memory address
 	    i2c_rep_start((I2C_7BITADDR<<1)|I2C_READ); // restart for reading
-	    byte val = i2c_read(true); // read one byte and send NAK to terminate
+	    byte val1 = i2c1_read(true); // read one byte and send NAK to terminate
+	    byte val2 = i2c2_read(true); // read one byte and send NAK to terminate
 	    i2c_stop(); // send stop condition
-	    Serial.println(val);
+	    Serial.print(val1);
+	    Serial.print(" ");
+	    Serial.println(val2);
 	    delay(1000);
 	}
 
