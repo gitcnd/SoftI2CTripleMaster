@@ -263,29 +263,50 @@ uint8_t __attribute__ ((noinline)) i2c5_read(bool last) __attribute__ ((used));
 #define SDA1_OUT       	_SFR_IO_ADDR(SDA1_PORT)
 #define SDA1_IN		(_SFR_IO_ADDR(SDA1_PORT) - 2)
 
+#define SDA1_PINMASK 1<<SDA1_PIN
+
 #ifdef SDA2_PORT
+//#if SDA2_PORT ne SDA1_PORT ... grr ... stupid preprocessors cannot compare strings....
+//#error "We only support the use of a single port - and suggest you use PORTC for it"
+//#endif
 #define SDA2_DDR       	(_SFR_IO_ADDR(SDA2_PORT) - 1)
 #define SDA2_OUT       	_SFR_IO_ADDR(SDA2_PORT)
 #define SDA2_IN		(_SFR_IO_ADDR(SDA2_PORT) - 2)
+#define SDA2_PINMASK 1<<SDA2_PIN
+#else
+#define SDA2_PINMASK 0
 #endif
 
 #ifdef SDA3_PORT
 #define SDA3_DDR       	(_SFR_IO_ADDR(SDA3_PORT) - 1)
 #define SDA3_OUT       	_SFR_IO_ADDR(SDA3_PORT)
 #define SDA3_IN		(_SFR_IO_ADDR(SDA3_PORT) - 2)
+#define SDA3_PINMASK 1<<SDA3_PIN
+#else
+#define SDA3_PINMASK 0
 #endif
 
 #ifdef SDA4_PORT
 #define SDA4_DDR       	(_SFR_IO_ADDR(SDA4_PORT) - 1)
 #define SDA4_OUT       	_SFR_IO_ADDR(SDA4_PORT)
 #define SDA4_IN		(_SFR_IO_ADDR(SDA4_PORT) - 2)
+#define SDA4_PINMASK 1<<SDA4_PIN
+#else
+#define SDA4_PINMASK 0
 #endif
 
 #ifdef SDA5_PORT
 #define SDA5_DDR       	(_SFR_IO_ADDR(SDA5_PORT) - 1)
 #define SDA5_OUT       	_SFR_IO_ADDR(SDA5_PORT)
 #define SDA5_IN		(_SFR_IO_ADDR(SDA5_PORT) - 2)
+#define SDA5_PINMASK 1<<SDA5_PIN
+#else
+#define SDA5_PINMASK 0
 #endif
+
+#define SDAa_PINMASK SDA1_PINMASK | SDA2_PINMASK | SDA3_PINMASK | SDA4_PINMASK | SDA5_PINMASK
+
+
 
 
 #define SCL_DDR       	(_SFR_IO_ADDR(SCL_PORT) - 1)
@@ -929,6 +950,8 @@ bool i2ca_write(uint8_t value) // Write to ALL at once!
   uint32_t start = millis();
 #endif
 
+
+
     
   // send data to the previously addressed device
   TWDR = value;
@@ -966,64 +989,30 @@ bool i2ca_write(uint8_t value) // Write to ALL at once!
      " nop \n\t"
      " brcc     _aLi2c_write_low                                ;;+1/+2=5/6C\n\t"
      " nop                                                     ;; +1 = 7C \n\t"
-     " cbi %[SDA1DDR],%[SDA1PIN]	        ;release SDA           ;; +2 = 9C \n\t"
-#ifdef SDA2_PORT
-     " cbi %[SDA2DDR],%[SDA2PIN]	        ;release SDA           ;; +2 = 9C \n\t"
-#endif
-#ifdef SDA3_PORT
-     " cbi %[SDA3DDR],%[SDA3PIN]	        ;release SDA           ;; +3 = 9C \n\t"
-#endif
-#ifdef SDA4_PORT
-     " cbi %[SDA4DDR],%[SDA4PIN]	        ;release SDA           ;; +4 = 9C \n\t"
-#endif
-#ifdef SDA5_PORT
-     " cbi %[SDA5DDR],%[SDA5PIN]	        ;release SDA           ;; +5 = 9C \n\t"
-#endif
+//     " cbi %[SDA1DDR],%[SDA1PIN]	        ;release SDA           ;; +2 = 9C \n\t"
+     " in	r31,%[SDA1DDR]					;; read existing values \n\t"
+     " cbr	r31,%[SDABITMASK]				;; clear all the relevant bits \n\t"
+     " out	%[SDA1DDR],r31					;; write it out \n\t"
 #if I2C_PULLUP
-     " sbi      %[SDA1OUT],%[SDA1PIN]     ;enable SDA pull-up \n\t"
-#ifdef SDA2_PORT
-     " sbi      %[SDA2OUT],%[SDA2PIN]     ;enable SDA pull-up \n\t"
-#endif
-#ifdef SDA3_PORT
-     " sbi      %[SDA3OUT],%[SDA3PIN]     ;enable SDA pull-up \n\t"
-#endif
-#ifdef SDA4_PORT
-     " sbi      %[SDA4OUT],%[SDA4PIN]     ;enable SDA pull-up \n\t"
-#endif
-#ifdef SDA5_PORT
-     " sbi      %[SDA5OUT],%[SDA5PIN]     ;enable SDA pull-up \n\t"
-#endif
+//     " sbi      %[SDA1OUT],%[SDA1PIN]     ;enable SDA pull-up \n\t"
+     " in       r31,%[SDA1OUT]                                  ;; read existing values \n\t"
+     " sbr      r31,%[SDABITMASK]                               ;; clear all the relevant bits \n\t"
+     " out      %[SDA1OUT],r31                                  ;; write it out \n\t"
 #endif
      " rjmp      _aLi2c_write_high                              ;; +2 = 11C \n\t"
      "_aLi2c_write_low: \n\t"
 #if I2C_PULLUP
-     " cbi      %[SDA1OUT],%[SDA1PIN]     ;disable pull-up \n\t"
-#ifdef SDA2_PORT
-     " cbi      %[SDA2OUT],%[SDA2PIN]     ;disable pull-up \n\t"
+//     " cbi      %[SDA1OUT],%[SDA1PIN]     ;disable pull-up \n\t"
+
+     " in	r31,%[SDA1OUT]					;; read existing values \n\t"
+     " cbr	r31,%[SDABITMASK]				;; clear all the relevant bits \n\t"
+     " out	%[SDA1OUT],r31					;; write it out \n\t"
 #endif
-#ifdef SDA3_PORT
-     " cbi      %[SDA3OUT],%[SDA3PIN]     ;disable pull-up \n\t"
-#endif
-#ifdef SDA4_PORT
-     " cbi      %[SDA4OUT],%[SDA4PIN]     ;disable pull-up \n\t"
-#endif
-#ifdef SDA5_PORT
-     " cbi      %[SDA5OUT],%[SDA5PIN]     ;disable pull-up \n\t"
-#endif
-#endif
-     " sbi	%[SDA1DDR],%[SDA1PIN]	;force SDA low         ;; +2 = 9C \n\t"
-#ifdef SDA2_PORT
-     " sbi	%[SDA2DDR],%[SDA2PIN]	;force SDA low         ;; +2 = 9C \n\t"
-#endif
-#ifdef SDA3_PORT
-     " sbi	%[SDA3DDR],%[SDA3PIN]	;force SDA low         ;; +3 = 9C \n\t"
-#endif
-#ifdef SDA4_PORT
-     " sbi	%[SDA4DDR],%[SDA4PIN]	;force SDA low         ;; +4 = 9C \n\t"
-#endif
-#ifdef SDA5_PORT
-     " sbi	%[SDA5DDR],%[SDA5PIN]	;force SDA low         ;; +5 = 9C \n\t"
-#endif
+//     " sbi	%[SDA1DDR],%[SDA1PIN]	;force SDA low         ;; +2 = 9C \n\t"
+     " in       r31,%[SDA1DDR]                                  ;; read existing values \n\t"
+     " sbr      r31,%[SDABITMASK]                               ;; clear all the relevant bits \n\t"
+     " out      %[SDA1DDR],r31                                  ;; write it out \n\t"
+
      " rjmp	_aLi2c_write_high                               ;;+2 = 11C \n\t"
      "_aLi2c_write_high: \n\t"
 #if I2C_DELAY_COUNTER >= 1
@@ -1056,33 +1045,17 @@ bool i2ca_write(uint8_t value) // Write to ALL at once!
      " sbi	%[SCLDDR],%[SCLPIN]	;force SCL low ;; +2 = 5C \n\t"
      " nop \n\t"
      " nop \n\t"
-     " cbi	%[SDA1DDR],%[SDA1PIN]	;release SDA ;;+2 = 7C \n\t"
-#ifdef SDA2_PORT
-     " cbi	%[SDA2DDR],%[SDA2PIN]	;release SDA ;;+2 = 7C \n\t"
-#endif
-#ifdef SDA3_PORT
-     " cbi	%[SDA3DDR],%[SDA3PIN]	;release SDA ;;+3 = 7C \n\t"
-#endif
-#ifdef SDA4_PORT
-     " cbi	%[SDA4DDR],%[SDA4PIN]	;release SDA ;;+4 = 7C \n\t"
-#endif
-#ifdef SDA5_PORT
-     " cbi	%[SDA5DDR],%[SDA5PIN]	;release SDA ;;+5 = 7C \n\t"
-#endif
+//     " cbi	%[SDA1DDR],%[SDA1PIN]	;release SDA ;;+2 = 7C \n\t"
+     " in	r31,%[SDA1DDR]					;; read existing values \n\t"
+     " cbr	r31,%[SDABITMASK]				;; clear all the relevant bits \n\t"
+     " out	%[SDA1DDR],r31					;; write it out \n\t"
+
 #if I2C_PULLUP
-     " sbi      %[SDA1OUT],%[SDA1PIN]     ;enable SDA pull-up \n\t"
-#ifdef SDA2_PORT
-     " sbi      %[SDA2OUT],%[SDA2PIN]     ;enable SDA pull-up \n\t"
-#endif
-#ifdef SDA3_PORT
-     " sbi      %[SDA3OUT],%[SDA3PIN]     ;enable SDA pull-up \n\t"
-#endif
-#ifdef SDA4_PORT
-     " sbi      %[SDA4OUT],%[SDA4PIN]     ;enable SDA pull-up \n\t"
-#endif
-#ifdef SDA5_PORT
-     " sbi      %[SDA5OUT],%[SDA5PIN]     ;enable SDA pull-up \n\t"
-#endif
+//     " sbi      %[SDA1OUT],%[SDA1PIN]     ;enable SDA pull-up \n\t"
+     " in       r31,%[SDA1OUT]                                  ;; read existing values \n\t"
+     " sbr      r31,%[SDABITMASK]                               ;; clear all the relevant bits \n\t"
+     " out      %[SDA1OUT],r31                                  ;; write it out \n\t"
+
 #endif
 #if I2C_DELAY_COUNTER >= 1
      " rcall	ass_i2c_delay_half	;delay T/2 ;; +X = 7C+X \n\t"
@@ -1099,7 +1072,8 @@ bool i2ca_write(uint8_t value) // Write to ALL at once!
      " sbis	%[SCLIN],%[SCLPIN]	;wait SCL high         ;; 12C + X \n\t"
      " rcall    ass_i2c_wait_scl_high \n\t"
      " brmi     _aLi2c_write_return_false                       ;; 13C + X \n\t "
-     " sbis	%[SDA1IN],%[SDA1PIN]      ;if SDA hi -> return 0 ;; 15C + X \n\t"
+//     " sbis	%[SDA1IN],%[SDA1PIN]      ;if SDA hi -> return 0 ;; 15C + X \n\t"
+
      " ldi	r24,1                   ;return true           ;; 16C + X \n\t"
 #if I2C_DELAY_COUNTER >= 1
      " rcall	ass_i2c_delay_half	;delay T/2             ;; 16C + 2X \n\t"
@@ -1116,19 +1090,7 @@ bool i2ca_write(uint8_t value) // Write to ALL at once!
      ::
       [SCLDDR] "I"  (SCL_DDR), [SCLPIN] "I" (SCL_PIN), [SCLIN] "I" (SCL_IN),
       [SDA1OUT] "I" (SDA1_OUT), [SCLOUT] "I" (SCL_OUT),
-#ifdef SDA2_PORT
-      [SDA2OUT] "I" (SDA2_OUT), [SDA2DDR] "I"  (SDA2_DDR), [SDA2PIN] "I" (SDA2_PIN), [SDA2IN] "I" (SDA2_IN),
-#endif
-#ifdef SDA3_PORT
-      [SDA3OUT] "I" (SDA3_OUT), [SDA3DDR] "I"  (SDA3_DDR), [SDA3PIN] "I" (SDA3_PIN), [SDA3IN] "I" (SDA3_IN),
-#endif
-#ifdef SDA4_PORT
-      [SDA4OUT] "I" (SDA4_OUT), [SDA4DDR] "I"  (SDA4_DDR), [SDA4PIN] "I" (SDA4_PIN), [SDA4IN] "I" (SDA4_IN),
-#endif
-#ifdef SDA5_PORT
-      [SDA5OUT] "I" (SDA5_OUT), [SDA5DDR] "I"  (SDA5_DDR), [SDA5PIN] "I" (SDA5_PIN), [SDA5IN] "I" (SDA5_IN),
-#endif
-      [SDA1DDR] "I"  (SDA1_DDR), [SDA1PIN] "I" (SDA1_PIN), [SDA1IN] "I" (SDA1_IN)); 
+      [SDA1DDR] "I"  (SDA1_DDR),    [SDABITMASK] "I" (SDAa_PINMASK),   [SDA1IN] "I" (SDA1_IN) : "r31"); 
   return true; // fooling the compiler
 } // i2ca_write
 #endif
