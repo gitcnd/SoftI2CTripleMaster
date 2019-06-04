@@ -15,8 +15,17 @@ i2c_start		KEYWORD2
 i2c_start_wait		KEYWORD2
 i2c_rep_start		KEYWORD2
 i2c_stop		KEYWORD2
-i2c_write		KEYWORD2
-i2c_read		KEYWORD2
+i2ca_write		KEYWORD2
+i2c1_write		KEYWORD2
+i2c1_read		KEYWORD2
+i2c2_write		KEYWORD2
+i2c2_read		KEYWORD2
+i2c3_write		KEYWORD2
+i2c3_read		KEYWORD2
+i2c4_write		KEYWORD2
+i2c4_read		KEYWORD2
+i2c5_write		KEYWORD2
+i2c5_read		KEYWORD2
 
 I2C_READ		LITERAL1
 I2C_WRITE		LITERAL1
