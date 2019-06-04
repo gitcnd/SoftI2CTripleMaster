@@ -63,20 +63,12 @@ with 1 MHz CPU clock)
 * GPL license
 
 
-## Installation
-
-Just download the
-[Zip-File from github](https://github.com/felias-fogg/SoftI2CMaster),
-uncompress, rename the directory to <code>SoftI2CMaster</code> and move it into
-the <code>libraries</code> folder. In case you have not installed a library
-before, consult the the respective [help page](http://arduino.cc/en/Guide/Libraries).
-
 ## Importing the library
 
 In order to use the library, you have to import it using the include
 statement:
 
-    #include <SoftI2CMaster.h>
+    #include <SoftI2CTripleMaster.h>
 
 In the program text *before* the include statement, some compile-time
 parameters have to be specified, such as which pins are used for the
@@ -227,12 +219,12 @@ without sending first a stop condition. Same return value as
     i2c_stop()
 Sends a stop condition and thereby releases the bus. No return value.
 
-    i2c_write(byte)
-Sends a byte to the previously addressed device. Returns
+    i2cX_write(byte)  (where X is 1,2,3,4,5 or a for all)
+Sends a byte to the specified previously addressed device. Returns
 <code>true</code> if the device replies with an ACK, otherwise <code>false</code>.
 
-    i2c_read(last)
-Requests to receive a byte from the slave device. If <code>last</code>
+    i2cX_read(last)	(where X is 1 through 5)
+Requests to receive a byte from the specified slave device. If <code>last</code>
 is <code>true</code>, then a <code>NAK</code> is sent after receiving
 the byte finishing the read transfer sequence. The function returns
 the received byte.
@@ -249,7 +241,7 @@ device, with an address space < 256 (i.e. one byte for addressing)
 	#define SDA2_PIN 0 // = A0
 	#define SCL_PORT PORTC
 	#define SCL_PIN 5 // = A5
-	#include <SoftI2CMaster.h>
+	#include <SoftI2CTripleMaster.h>
 
 	#define I2C_7BITADDR 0x68 // DS1307
 	#define MEMLOC 0x0A 
@@ -276,47 +268,6 @@ device, with an address space < 256 (i.e. one byte for addressing)
 	    delay(1000);
 	}
 
-## I2CShell
-
-In the example directory, you find a much more elaborate example:
-<code>I2CShell</code>. This sketch can be used to interact with I2C
-devices similar in the way you can use the Bus Pirate. For example,
-you can type:
-
-    [ 0xAE 0 0 [ 0xAF r:5 ]
-
-This will address the I2C device under the (8-bit) address in write
-mode, set the reading register to 0, then opens the same device again
-in read mode and read 5 registers. A complete documentation of this
-program can be found in the
-[I2CShell example folder](https://github.com/felias-fogg/SoftI2CMaster/tree/master/examples/I2CShell).
-
-## Alternative Interface
-
-Meanwhile, I have written a wrapper around SoftI2CMaster that emulates
-the [Wire library](http://arduino.cc/en/Reference/Wire)
-(master mode 
-only). It is another C++-header file called <code>SoftWire.h</code>,
-which you need to include instead of
-<code>SoftI2CMaster.h</code>. The ports and pins have to be specified
-as described above. After the include statement you need to
-create a <code>SoftWire</code> instance:
-
-    #define SDA_PORT ...
-    ...
-    #include <SoftWire.h>
-    SoftWire Wire = SoftWire();
-    ...
-    setup() {
-        Wire.begin()
-    ...
-    }
-
-This interface sacrifices some of the advantages of the original
-library, in particular its small footprint, but comes handy if you
-need a replacement of the original *Wire* library. The following section
-sketches the memory footprint of different I2C libraries.
-
 ## Memory requirements
 
 In order to measure the memory requirements of the different
@@ -328,7 +279,7 @@ but it has the same functionality. The memory requirements differ
 somewhat from ATmega to ATtiny, but the overall picture is
 similar. The take-home message is: If you are short on memory (flash
 or RAM), it
-makes sense to use the SoftI2CMaster library. 
+makes sense to use the SoftI2CTripleMaster library. 
 
 <table align="right">
 <tr><td colspan="10" align="center">ATmega328</td></tr>
@@ -398,7 +349,7 @@ Another shortcoming is that one cannot use ports H and above on an ATmega256. Th
 Finally, as mentioned, the code runs only on AVR MCUs (because it uses
 assembler). If you want to use a software I2C library on the ARM
 platform, you could use
-https://github.com/felias-fogg/SlowSoftI2CMaster, which uses only C++
+https://github.com/felias-fogg/SlowSoftI2CTripleMaster, which uses only C++
 code. Because of this, it is much slower, but on a Genuino/Arduino
 Zero, the I2C bus runs with roughly 100kHz. There is also a Wire-like wrapper available for this library: https://github.com/felias-fogg/SlowSoftWire.
 
